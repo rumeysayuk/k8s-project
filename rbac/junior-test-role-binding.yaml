@@ -1,0 +1,27 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: junior-test-rbac
+  namespace: test
+subjects:
+# You can specify more than one "subject"
+- kind: Group
+  name: junior # "name" is case sensitive
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  # "roleRef" specifies the binding to a Role / ClusterRole
+  kind: ClusterRole  #this must be Role or ClusterRole
+  name: edit # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io
+
+
+#Bu YAML dosyası, Kubernetes'te bir RoleBinding kaynağı tanımlar. RoleBinding, belirli bir Role veya ClusterRole'un belirli bir kullanıcı veya grup üzerindeki yetkilendirmesini belirtir.  
+#subjects => Yetkilendirme işlemi yapılacak kullanıcı veya grupları belirtir.
+#kind => Yetkilendirme yapılacak öznelerin türü belirtilir. Bu örnekte Group olarak belirtilmiş, yani junior adında bir grup yetkilendirilecek.
+#name=> Yetkilendirilecek grup veya kullanıcının adı. Burada junior grubu yetkilendirilecek.
+#roleRef=> Yetkilendirme referansı, hangi Role veya ClusterRole ile bu grubun veya kullanıcının yetkilendirileceğini belirtir.
+# kind=> Bu Role veya ClusterRole'un türü belirtilir. Bu örnekte ClusterRole olarak belirtilmiş, yani küme düzeyinde bir rol ile yetkilendirme yapılacak.
+# name => Yetkilendirme yapılacak Role veya ClusterRole'un adı. Bu örnekte edit adında bir ClusterRole ile yetkilendirme yapılacak.
+# apiGroup => Bu Role veya ClusterRole'un API grubu belirtilir. rbac.authorization.k8s.io API grubunu kullanıyoruz.
+
+# Yani junior grubu, cluster düzeyindeki edit yetkilerine sahip olacak ve bu yetkiler test namespacesinde geçerli olacak.
