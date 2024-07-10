@@ -153,3 +153,62 @@ $ kubectl scale deployment k8s-deployment --replicas=10 -n production
 
 $ kubectl set image deployment/k8s-deployment k8s=ozgurozturknet/k8s:v2 -n production
 
+damemon set tüm worker nodeların üzerinde bir obje çalıştı8rmak istiyorsak kullanılır. Örneğin loglama kullanımlarında.
+"fluentd" uygulamasını bir "daemonset" olarak cluster'da deploy etmek gibi bir iş yapılabilir.
+Böylesi bir uygulama için;
+
+cd daemonset
+kubectl apply -f daemonset.yaml 
+
+Nodelar üzerinde oluşturulan daemonset objelerini görmek için
+
+kubectl  get daemonsets.apps -w 
+
+komutu çalıştırılır.
+
+cd ../statefulset
+kubectl apply -f .
+
+2 node'lu bir "mongodb" cluster'i "statefulset" olarak cluster'da deploy edildi. "mongodb" cluster'ın çalıştığı test edildi.
+
+kubectl exec -it mongostatefulset-0 -- bash
+
+root@mongostatefulset-0:/# mongo
+
+> rs.initiate({ _id: "MainRepSet", version: 1, 
+members: [ 
+ { _id: 0, host: "mongostatefulset-0.mongo-svc.default.svc.cluster.local:27017" }, 
+ { _id: 1, host: "mongostatefulset-1.mongo-svc.default.svc.cluster.local:27017" } ]});
+
+MainRepSet:PRIMARY> db.getSiblingDB("admin").createUser({
+...       user : "mongoadmin",
+...       pwd  : "P@ssw0rd!1",
+...       roles: [ { role: "root", db: "admin" } ]
+...  });
+
+MainRepSet:PRIMARY> rs.status();
+
+
+
+Cluster'da tüm objeler üstünde "okuma ve listeleme" haklarına sahip bir "service account" oluşturuldu. Bu service account’un bağlandığı bir pod oluşturuldu ve bağlanarak "curl" ile cluster’daki tüm podları listelendi.
+
+cd service_account
+
+$ kubectl apply -f serviceaccount.yaml
+
+$ kubectl exec -it pod-proje -- bash
+
+bash-5.0# CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+
+bash-5.0# TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+bash-5.0# curl --cacert $CERT https://kubernetes/api/v1/pods --header "Authorization:Bearer $TOKEN" | jq '.items[].metadata.name'
+
+
+Worker node'lardan bir tanesinin üzerindeki tüm podları tahliye edildi ve ardından yeni pod schedule edilememesini sağlandi
+
+$ nodedrain=$(kubectl get no -o jsonpath="{.items[3].metadata.name}")
+
+$ kubectl drain $nodedrain --ignore-daemonsets --delete-local-data
+
+$ kubectl cordon $nodedrain
